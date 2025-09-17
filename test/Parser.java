@@ -14,13 +14,13 @@ public class Parser {
         this.tokens = tokens;
     }
 
-     Expr parse() {
-    try {
-      return expression();
-    } catch (ParseError error) {
-      return null;
+    Expr parse() {
+        try {
+            return expression();
+        } catch (ParseError error) {
+            return null;
+        }
     }
-  }
 
     private Expr expression() {
         return equality();
@@ -53,7 +53,7 @@ public class Parser {
     private Expr term() {
         Expr expr = factor();
 
-        while (match(MINUS, PLUS)) {
+        while (match(MINUS, PLUS, CONFLUENCE)) {
             Token operator = previous();
             Expr right = factor();
             expr = new Expr.Binary(expr, operator, right);
@@ -93,6 +93,10 @@ public class Parser {
             return new Expr.Literal(null);
 
         if (match(NUMBER, STRING)) {
+            return new Expr.Literal(previous().literal);
+        }
+
+        if (match(FLOWRATE)) {
             return new Expr.Literal(previous().literal);
         }
 

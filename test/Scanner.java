@@ -109,7 +109,14 @@ class Scanner {
                     addToken(SLASH);
                 }
                 break;
-
+            case '~':
+                if (match('~')) {
+                    // Confluence operator "~~"
+                    addToken(CONFLUENCE);
+                } else {
+                    myLox.error(line, "Unexpected '~'. Did you mean ~~ ?");
+                }
+                break;
             case ' ':
             case '\r':
             case '\t':
@@ -161,15 +168,21 @@ class Scanner {
 
         // Look for a fractional part.
         if (peek() == '.' && isDigit(peekNext())) {
-            // Consume the "."
-            advance();
-
+            advance(); // consume '.'
             while (isDigit(peek()))
                 advance();
         }
 
-        addToken(NUMBER,
-                Double.parseDouble(source.substring(start, current)));
+        // --- NEW: check for trailing 'x' ---
+        if (peek() == 'x' || peek() == 'X') {
+            String numLex = source.substring(start, current);
+            advance(); // consume 'x'
+            double factor = Double.parseDouble(numLex);
+            addToken(TokenType.FLOWRATE, new FlowRate(factor));
+            return;
+        }
+
+        addToken(NUMBER, Double.parseDouble(source.substring(start, current)));
     }
 
     private void string() {

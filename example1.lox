@@ -1,0 +1,18 @@
+// Roots: googong, jerrabombarra, upper molongolo
+// googong -> dam A -> queanbeyan
+// central molongolo = queanbeyan ~~ upper molongolo ~~ jerrabombarra
+// central molongolo -> dam B -> lower molongolo
+// OUTPUT = lower molongolo
+
+// Choose factors (L/s per mm of rain):
+// googong = 3x, upper molongolo = 1.8x, jerrabombarra = 2.4x
+
+(
+  // lower molongolo (via dam B over central molongolo)
+  (
+    // central molongolo
+    (3x)        // queanbeyan = googong through dam A (identity)
+    ~~ (1.8x)   // upper molongolo
+    ~~ (2.4x)   // jerrabombarra
+  )
+)
