@@ -109,7 +109,13 @@ class Scanner {
                     addToken(SLASH);
                 }
                 break;
-
+    case '~':
+    if (match('~')) {
+        addToken(CONFLUENCE); // "~~"
+    } else {
+        myLox.error(line, "Unexpected '~'. Did you mean ~~ ?");
+    }
+    break;
             case ' ':
             case '\r':
             case '\t':
@@ -156,17 +162,22 @@ class Scanner {
     }
 
     private void number() {
-        while (isDigit(peek()))
-            advance();
+        while (isDigit(peek())) advance();
 
-        // Look for a fractional part.
-        if (peek() == '.' && isDigit(peekNext())) {
-            // Consume the "."
-            advance();
+    // Look for a fractional part.
+    if (peek() == '.' && isDigit(peekNext())) {
+        advance(); // consume '.'
+        while (isDigit(peek())) advance();
+    }
 
-            while (isDigit(peek()))
-                advance();
-        }
+    // --- NEW: check for trailing 'x' ---
+    if (peek() == 'x' || peek() == 'X') {
+        String numLex = source.substring(start, current);
+        advance(); // consume 'x'
+        double factor = Double.parseDouble(numLex);
+        addToken(TokenType.FLOWRATE, new FlowRate(factor));
+        return;
+    }
 
         addToken(NUMBER,
                 Double.parseDouble(source.substring(start, current)));

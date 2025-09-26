@@ -37,6 +37,7 @@ public class Parser {
 
         return expr;
     }
+    
 
     private Expr comparison() {
         Expr expr = term();
@@ -53,11 +54,11 @@ public class Parser {
     private Expr term() {
         Expr expr = factor();
 
-        while (match(MINUS, PLUS)) {
-            Token operator = previous();
-            Expr right = factor();
-            expr = new Expr.Binary(expr, operator, right);
-        }
+        while (match(MINUS, PLUS, CONFLUENCE)) {
+  Token op = previous();
+  Expr right = factor();
+  expr = new Expr.Binary(expr, op, right);
+}
 
         return expr;
     }
@@ -81,6 +82,8 @@ public class Parser {
             return new Expr.Unary(operator, right);
         }
 
+        
+
         return primary();
     }
 
@@ -93,6 +96,10 @@ public class Parser {
             return new Expr.Literal(null);
 
         if (match(NUMBER, STRING)) {
+            return new Expr.Literal(previous().literal);
+        }
+
+        if (match(FLOWRATE)) {
             return new Expr.Literal(previous().literal);
         }
 
