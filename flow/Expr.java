@@ -1,4 +1,4 @@
-package test;
+package flow;
 
 import java.util.List;
 
@@ -54,6 +54,12 @@ abstract class Expr {
         }
 
         final Object value;
+    }
+
+    static class LiteralFlow extends Literal {
+        LiteralFlow(Object value) {
+            super(value);
+        }
     }
 
     static class Unary extends Expr {

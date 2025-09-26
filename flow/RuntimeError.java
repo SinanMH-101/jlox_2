@@ -1,4 +1,4 @@
-package test;
+package flow;
 
 public class RuntimeError extends RuntimeException{
     final Token token;

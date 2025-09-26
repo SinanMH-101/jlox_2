@@ -1,0 +1,20 @@
+//Example Program 1
+
+// River A flows through Dam Z and joins River B to form River C
+// River C joins with River D to make the output river
+
+// Initially:
+// River A: 2.0x
+// River B: 1.5x
+// River C: 5.1x
+// River D: 4.1x
+// Output River: 8.2x
+
+// C = 5.1x ~~ (A ~~ B) 
+// C = 5.1x ~~ (2.0x ~~ 1.5x)
+// D = 4.1x ~~ (5.1x ~~ (2.0x ~~ 1.5x))
+// Output = 8.2x ~~ (4.1x ~~ (5.1x ~~ (2.0x ~~ 1.5x)))
+
+
+//Final Expression:
+8.2x ~~ (4.1x ~~ (5.1x ~~ (2.0x ~~ 1.5x)))

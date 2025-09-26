@@ -1,11 +1,11 @@
-package test;
+package flow;
+
+import static flow.TokenType.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static test.TokenType.*;
 
 class Scanner {
     private static final Map<String, TokenType> keywords;
@@ -32,22 +32,8 @@ class Scanner {
 
     static {
         keywords = new HashMap<>();
-        keywords.put("and", AND);
-        keywords.put("class", CLASS);
-        keywords.put("else", ELSE);
-        keywords.put("false", FALSE);
-        keywords.put("for", FOR);
-        keywords.put("fun", FUN);
-        keywords.put("if", IF);
-        keywords.put("nil", NIL);
-        keywords.put("or", OR);
         keywords.put("print", PRINT);
-        keywords.put("return", RETURN);
-        keywords.put("super", SUPER);
-        keywords.put("this", THIS);
-        keywords.put("true", TRUE);
         keywords.put("var", VAR);
-        keywords.put("while", WHILE);
     }
 
     private void scanToken() {
@@ -67,12 +53,6 @@ class Scanner {
             case '}':
                 addToken(RIGHT_BRACE);
                 break;
-            case ',':
-                addToken(COMMA);
-                break;
-            case '.':
-                addToken(DOT);
-                break;
             case '-':
                 addToken(MINUS);
                 break;
@@ -86,20 +66,6 @@ class Scanner {
                 addToken(STAR);
                 break;
 
-            // double
-            case '!':
-                addToken(match('=') ? BANG_EQUAL : BANG);
-                break;
-            case '=':
-                addToken(match('=') ? EQUAL_EQUAL : EQUAL);
-                break;
-            case '<':
-                addToken(match('=') ? LESS_EQUAL : LESS);
-                break;
-            case '>':
-                addToken(match('=') ? GREATER_EQUAL : GREATER);
-                break;
-
             case '/':
                 if (match('/')) {
                     // A comment goes until the end of the line.
@@ -107,6 +73,21 @@ class Scanner {
                         advance();
                 } else {
                     addToken(SLASH);
+                }
+                break;
+            case '~':
+                if (match('~')) {
+                    addToken(CONFLUENCE); // "~~"
+                } else {
+                    myFlow.error(line, "Unexpected '~'. Did you mean ~~ ?");
+                }
+                break;
+
+            case '!':
+                if (match('~')) {
+                    addToken(BLOCKADE); // "!~"
+                } else {
+                    myFlow.error(line, "Unexpected '!'. Did you mean !~ ?");
                 }
                 break;
 
@@ -137,7 +118,7 @@ class Scanner {
                 } else if (isAlpha(c)) {
                     identifier();
                 } else {
-                    myLox.error(line, "Unexpected character.");
+                    myFlow.error(line, "Unexpected character.");
                 }
                 break;
         }
@@ -156,21 +137,26 @@ class Scanner {
     }
 
     private void number() {
-        while (isDigit(peek()))
-            advance();
+    while (isDigit(peek())) advance();
 
-        // Look for a fractional part.
-        if (peek() == '.' && isDigit(peekNext())) {
-            // Consume the "."
-            advance();
-
-            while (isDigit(peek()))
-                advance();
-        }
-
-        addToken(NUMBER,
-                Double.parseDouble(source.substring(start, current)));
+    // Look for a fractional part.
+    if (peek() == '.' && isDigit(peekNext())) {
+        advance(); // consume "."
+        while (isDigit(peek())) advance();
     }
+
+    // Check for trailing "x"
+    if (peek() == 'x' || peek() == 'X') {
+        advance(); // consume the "x"
+        String lexeme = source.substring(start, current);
+        addToken(FLOW, lexeme);  // store the full "3.1x"
+        return;
+    }
+
+    // Otherwise just a number
+    String lexeme = source.substring(start, current);
+    addToken(NUMBER, Double.parseDouble(lexeme));
+}
 
     private void string() {
         while (peek() != '"' && !isAtEnd()) {
@@ -180,7 +166,7 @@ class Scanner {
         }
 
         if (isAtEnd()) {
-            myLox.error(line, "Unterminated string.");
+            myFlow.error(line, "Unterminated string.");
             return;
         }
 

@@ -1,0 +1,26 @@
+
+//Example Program 2
+
+//River Slidr and river Styx flows into river Ifing
+
+// Initially:
+// River Slidr: 4.0x
+// River Styx: 7.9x
+// River Ifing: 6.7x
+// Outgoing River: 9.1x
+
+// River Ifing = 6.7x ~~ (4.0x ~~ 7.9x)
+// Outgoing River = 9.1x ~~ (6.7x ~~ (4.0x ~~ 7.9x))
+
+//Final Expression:
+9.1x ~~ (6.7x ~~ (4.0x ~~ 7.9x))
+
+
+
+
+
+
+
+
+
+

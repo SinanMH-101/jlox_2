@@ -1,4 +1,4 @@
-package test;
+package flow;
 
 class Token {
     final TokenType type;
