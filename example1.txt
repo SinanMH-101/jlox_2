@@ -1,0 +1,16 @@
+// River A flows through Dam A and joins River B to form River C
+// River C joins with River D to make the output river
+
+
+// Initially:
+// River A: 2.0x
+// River B: 1.5x
+// River C: 5.1x
+// River D: 4.1x
+// Output River: 8.2x
+
+// C = 5.1x ~~ (A ~~ B) 
+// Output = 8.2x ~~ (4.1x ~~ (5.1x ~~ (A ~~ B) ))
+//	= 8.2x ~~ (4.1x ~~ (5.1x ~~ (2.0x ~~ 1.5x) ))
+
+8.2x ~~ (4.1x ~~ (5.1x ~~ (2.0x ~~ 1.5x) ))

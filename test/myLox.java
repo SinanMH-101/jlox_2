@@ -55,9 +55,14 @@ public class myLox {
         // Stop if there was a syntax error.
         if (hadError)
             return;
-
+        System.out.println("\n");
+        System.out.println("Successfully Parsed");
+        System.out.println("----------------------------------------");
+        System.out.println("AST:");
         System.out.println(new AstPrinter().print(expression));
-    }
+        System.out.println("----------------------------------------");
+        System.out.println("\n");
+        }
 
     static void error(int line, String message) {
         report(line, "", message);
