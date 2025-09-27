@@ -1,13 +1,11 @@
 package flow;
 
-import flow.*;
-
 class Interpreter implements Expr.Visitor<Object> {
 
     void interpret(Expr expression) {
         try {
             Object value = evaluate(expression);
-            System.out.println(stringify(value));
+            System.out.print("Output flow: " + stringify(value));
         } catch (RuntimeError error) {
             myFlow.runtimeError(error);
         }
@@ -55,6 +53,31 @@ class Interpreter implements Expr.Visitor<Object> {
 
                 double diff = lVal - rVal;
                 return diff + "x";
+
+            //kept for future, seems useful to have
+            case PLUS: {
+                checkNumberOperands(expr.operator, left, right);
+                return (double) left + (double) right;
+            }
+
+            case MINUS: {
+                checkNumberOperands(expr.operator, left, right);
+                return (double) left - (double) right;
+            }
+
+            case STAR: {
+                checkNumberOperands(expr.operator, left, right);
+                return (double) left * (double) right;
+            }
+
+            case SLASH: {
+                checkNumberOperands(expr.operator, left, right);
+                double denom = (double) right;
+                if (denom == 0.0) {
+                    throw new RuntimeError(expr.operator, "Division by zero.");
+                }
+                return (double) left / denom;
+            }
         }
 
         // Unreachable for now
@@ -76,7 +99,7 @@ class Interpreter implements Expr.Visitor<Object> {
         Object right = evaluate(expr.right);
 
         switch (expr.operator.type) {
-            case MINUS: // keep minus in case you want -FLOW
+            case MINUS: // kept just incase for now
                 checkNumberOperand(expr.operator, right);
                 return -(double) right;
         }

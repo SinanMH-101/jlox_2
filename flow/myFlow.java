@@ -13,11 +13,21 @@ public class myFlow {
     static boolean hadError = false;
     static boolean hadRuntimeError = false;
 
+    // new flag
+    private static boolean evaluateMode = false;
+
     public static void main(String[] args) throws IOException {
-        if (args.length > 1) {
-            System.out.println("Usage: jlox [script]");
+        if (args.length > 2) {
+            System.out.println("Usage: myFlow [script] [evaluate]");
             System.exit(64);
-        } else if (args.length == 1) {
+        }
+
+        // checking for evaluate flag
+        if (args.length == 2 && args[1].equalsIgnoreCase("evaluate")) {
+            evaluateMode = true;
+        }
+
+        if (args.length >= 1) {
             runFile(args[0]);
         } else {
             runPrompt();
@@ -39,11 +49,10 @@ public class myFlow {
         BufferedReader reader = new BufferedReader(input);
 
         for (;;) {
-            System.out.println(">");
+            System.out.print("> ");
             String line = reader.readLine();
-            if (line == null) {
+            if (line == null)
                 break;
-            }
             run(line);
             hadError = false;
         }
@@ -56,23 +65,27 @@ public class myFlow {
         Parser parser = new Parser(tokens);
         Expr expression = parser.parse();
 
-        // Stop if there was a syntax error.
+        // Stopping if there was a syntax error.
         if (hadError)
             return;
 
-        // System.out.println(new AstPrinter().print(expression));
-        // interpreter.interpret(expression);
-        prntParsedAST(expression);
+        if (evaluateMode) {
+            prntParsedAST(expression);
+            System.out.println("\nEvaluation: ");
+            interpreter.interpret(expression);
+            System.out.println("\n");
+
+        } else {
+            prntParsedAST(expression);
+        }
     }
 
     static void error(int line, String message) {
         report(line, "", message);
     }
 
-    private static void report(int line, String where,
-            String message) {
-        System.err.println(
-                "[line " + line + "] Error" + where + ": " + message);
+    private static void report(int line, String where, String message) {
+        System.err.println("[line " + line + "] Error" + where + ": " + message);
         hadError = true;
     }
 
@@ -98,7 +111,6 @@ public class myFlow {
         System.out.println(dash.repeat(ast.length()));
         System.out.println(ast);
         System.out.println(dash.repeat(ast.length()));
+        System.out.println("\n");
     }
-
-    
 }

@@ -1,0 +1,21 @@
+
+
+//Example Program 3
+
+//Rivers Acheron, Cocytus, and Lethe flow together into the river Phlegethon
+//Phlegethon then flows into the outgoing river Oceanus
+
+// Initially:
+// River Acheron: 2.5x
+// River Cocytus: 3.3x
+// River Lethe: 1.8x
+// River Phlegethon: 4.4x
+// Outgoing River Oceanus: 5.7x
+
+// River Phlegethon = 4.4x ~~ (2.5x ~~ (3.3x ~~ 1.8x))
+// Outgoing River = 5.7x ~~ (4.4x ~~ (2.5x ~~ (3.3x ~~ 1.8x)))
+
+//Final Expression:
+5.7x ~~ (4.4x ~~ (2.5x ~~ 3.3x ~~ 1.8x))
+
+
