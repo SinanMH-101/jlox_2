@@ -41,7 +41,6 @@ public class Parser {
     }
 
     // primary → FLOW | NUMBER | STRING | "(" expression ")" ;
-    // (Keep NUMBER/STRING only if you left those tokens in TokenType)
     private Expr primary() {
         if (match(FLOW)) {
             return new Expr.LiteralFlow(previous().literal);

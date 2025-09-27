@@ -60,8 +60,9 @@ public class myFlow {
         if (hadError)
             return;
 
-        System.out.println(new AstPrinter().print(expression));
-        interpreter.interpret(expression);
+        // System.out.println(new AstPrinter().print(expression));
+        // interpreter.interpret(expression);
+        prntParsedAST(expression);
     }
 
     static void error(int line, String message) {
@@ -88,4 +89,16 @@ public class myFlow {
                 "\n[line " + error.token.line + "]");
         hadRuntimeError = true;
     }
+
+    static void prntParsedAST(Expr expression) {
+        String ast = new AstPrinter().print(expression);
+        String dash = "-";
+        System.out.println("\nSuccessfully Parsed!!");
+        System.out.println("\nAST:");
+        System.out.println(dash.repeat(ast.length()));
+        System.out.println(ast);
+        System.out.println(dash.repeat(ast.length()));
+    }
+
+    
 }

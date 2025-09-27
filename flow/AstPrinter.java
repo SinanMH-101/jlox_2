@@ -13,19 +13,20 @@ class AstPrinter implements Expr.Visitor<String> {
 
   @Override
   public String visitGroupingExpr(Expr.Grouping expr) {
-    return parenthesize("group", expr.expression);
+    return expr.expression.accept(this);
   }
 
   @Override
-public String visitLiteralExpr(Expr.Literal expr) {
-    if (expr.value == null) return "nil";
+  public String visitLiteralExpr(Expr.Literal expr) {
+    if (expr.value == null)
+      return "nil";
 
     if (expr instanceof Expr.LiteralFlow) {
-        return expr.value.toString(); // keep the "3.1x"
+      return expr.value.toString(); // keep the "3.1x"
     }
 
     return expr.value.toString();
-}
+  }
 
   @Override
   public String visitUnaryExpr(Expr.Unary expr) {

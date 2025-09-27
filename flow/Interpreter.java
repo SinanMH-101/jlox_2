@@ -20,12 +20,41 @@ class Interpreter implements Expr.Visitor<Object> {
 
         switch (expr.operator.type) {
             case CONFLUENCE: // ~~ operator
-                checkNumberOperands(expr.operator, left, right);
-                return (double) left + (double) right;
+                // checkNumberOperands(expr.operator, left, right);
+
+                String leftStr = left.toString();
+                String rightStr = right.toString();
+
+                // remove trailing 'x' if present
+                if (leftStr.endsWith("x")) {
+                    leftStr = leftStr.substring(0, leftStr.length() - 1);
+                }
+                if (rightStr.endsWith("x")) {
+                    rightStr = rightStr.substring(0, rightStr.length() - 1);
+                }
+
+                double leftVal = Double.parseDouble(leftStr);
+                double rightVal = Double.parseDouble(rightStr);
+
+                double result = leftVal + rightVal;
+                return result + "x";
 
             case BLOCKADE: // !~ operator
-                checkNumberOperands(expr.operator, left, right);
-                return (double) left - (double) right;
+                String lStr = left.toString();
+                String rStr = right.toString();
+
+                if (lStr.endsWith("x")) {
+                    lStr = lStr.substring(0, lStr.length() - 1);
+                }
+                if (rStr.endsWith("x")) {
+                    rStr = rStr.substring(0, rStr.length() - 1);
+                }
+
+                double lVal = Double.parseDouble(lStr);
+                double rVal = Double.parseDouble(rStr);
+
+                double diff = lVal - rVal;
+                return diff + "x";
         }
 
         // Unreachable for now
