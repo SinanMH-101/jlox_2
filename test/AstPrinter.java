@@ -1,6 +1,7 @@
 package test;
 
 import test.Expr.Assign;
+import test.Expr.Logical;
 import test.Expr.Variable;
 
 class AstPrinter implements Expr.Visitor<String> {
@@ -56,6 +57,12 @@ class AstPrinter implements Expr.Visitor<String> {
   public String visitAssignExpr(Assign expr) {
     // TODO Auto-generated method stub
     throw new UnsupportedOperationException("Unimplemented method 'visitAssignExpr'");
+  }
+
+  @Override
+  public String visitLogicalExpr(Logical expr) {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'visitLogicalExpr'");
   }
 
   //  public static void main(String[] args) {
