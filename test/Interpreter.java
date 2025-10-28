@@ -5,29 +5,35 @@ import java.util.List;
 
 import test.*;
 import test.Expr.Variable;
+import test.Stmt.Return;
 import test.Stmt.Var;
+import test.Return.*;
 
 class Interpreter implements Expr.Visitor<Object>,
         Stmt.Visitor<Void> {
 
     final Environment globals = new Environment();
-  private Environment environment = globals;
+    private Environment environment = globals;
 
-  Interpreter() {
-    globals.define("clock", new LoxCallable() {
-      @Override
-      public int arity() { return 0; }
+    Interpreter() {
+        globals.define("clock", new LoxCallable() {
+            @Override
+            public int arity() {
+                return 0;
+            }
 
-      @Override
-      public Object call(Interpreter interpreter,
-                         List<Object> arguments) {
-        return (double)System.currentTimeMillis() / 1000.0;
-      }
+            @Override
+            public Object call(Interpreter interpreter,
+                    List<Object> arguments) {
+                return (double) System.currentTimeMillis() / 1000.0;
+            }
 
-      @Override
-      public String toString() { return "<native fn>"; }
-    });
-  }
+            @Override
+            public String toString() {
+                return "<native fn>";
+            }
+        });
+    }
 
     void interpret(List<Stmt> statements) {
         try {
@@ -118,14 +124,14 @@ class Interpreter implements Expr.Visitor<Object>,
     }
 
     @Override
-  public Void visitIfStmt(Stmt.If stmt) {
-    if (isTruthy(evaluate(stmt.condition))) {
-      execute(stmt.thenBranch);
-    } else if (stmt.elseBranch != null) {
-      execute(stmt.elseBranch);
+    public Void visitIfStmt(Stmt.If stmt) {
+        if (isTruthy(evaluate(stmt.condition))) {
+            execute(stmt.thenBranch);
+        } else if (stmt.elseBranch != null) {
+            execute(stmt.elseBranch);
+        }
+        return null;
     }
-    return null;
-  }
 
     private boolean isTruthy(Object object) {
         if (object == null)
@@ -238,57 +244,67 @@ class Interpreter implements Expr.Visitor<Object>,
     }
 
     @Override
-  public Object visitLogicalExpr(Expr.Logical expr) {
-    Object left = evaluate(expr.left);
+    public Object visitLogicalExpr(Expr.Logical expr) {
+        Object left = evaluate(expr.left);
 
-    if (expr.operator.type == TokenType.OR) {
-      if (isTruthy(left)) return left;
-    } else {
-      if (!isTruthy(left)) return left;
+        if (expr.operator.type == TokenType.OR) {
+            if (isTruthy(left))
+                return left;
+        } else {
+            if (!isTruthy(left))
+                return left;
+        }
+
+        return evaluate(expr.right);
     }
-
-    return evaluate(expr.right);
-  }
 
     @Override
-  public Void visitWhileStmt(Stmt.While stmt) {
-    while (isTruthy(evaluate(stmt.condition))) {
-      execute(stmt.body);
-    }
-    return null;
-  }
-
-  @Override
-  public Object visitCallExpr(Expr.Call expr) {
-    Object callee = evaluate(expr.callee);
-
-    List<Object> arguments = new ArrayList<>();
-    for (Expr argument : expr.arguments) { 
-      arguments.add(evaluate(argument));
+    public Void visitWhileStmt(Stmt.While stmt) {
+        while (isTruthy(evaluate(stmt.condition))) {
+            execute(stmt.body);
+        }
+        return null;
     }
 
-    if (!(callee instanceof LoxCallable)) {
-      throw new RuntimeError(expr.paren,
-          "Can only call functions and classes.");
+    @Override
+    public Object visitCallExpr(Expr.Call expr) {
+        Object callee = evaluate(expr.callee);
+
+        List<Object> arguments = new ArrayList<>();
+        for (Expr argument : expr.arguments) {
+            arguments.add(evaluate(argument));
+        }
+
+        if (!(callee instanceof LoxCallable)) {
+            throw new RuntimeError(expr.paren,
+                    "Can only call functions and classes.");
+        }
+
+        LoxCallable function = (LoxCallable) callee;
+
+        if (arguments.size() != function.arity()) {
+            throw new RuntimeError(expr.paren, "Expected " +
+                    function.arity() + " arguments but got " +
+                    arguments.size() + ".");
+        }
+
+        return function.call(this, arguments);
     }
 
-    LoxCallable function = (LoxCallable)callee;
+    @Override
+    public Void visitReturnStmt(Stmt.Return stmt) {
+        Object value = null;
+        if (stmt.value != null)
+            value = evaluate(stmt.value);
 
-    if (arguments.size() != function.arity()) {
-      throw new RuntimeError(expr.paren, "Expected " +
-          function.arity() + " arguments but got " +
-          arguments.size() + ".");
+        throw new test.Return(value);
     }
 
-    return function.call(this, arguments);
-  }
-
-   @Override
-  public Void visitFunctionStmt(Stmt.Function stmt) {
-    LoxFunction function = new LoxFunction(stmt);
-    environment.define(stmt.name.lexeme, function);
-    return null;
-  }
-
+    @Override
+    public Void visitFunctionStmt(Stmt.Function stmt) {
+        LoxFunction function = new LoxFunction(stmt);
+        environment.define(stmt.name.lexeme, function);
+        return null;
+    }
 
 }
