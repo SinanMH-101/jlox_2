@@ -1,8 +1,7 @@
+// test/myLox.java
 package test;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -14,19 +13,25 @@ public class myLox {
     static boolean hadRuntimeError = false;
 
     public static void main(String[] args) throws IOException {
-        if (args.length > 1) {
-            System.out.println("Usage: jlox [script]");
+        // Usage:
+        // java -cp bin test.myLox script.lox [rainfall]
+        if (args.length < 1 || args.length > 2) {
+            System.out.println("Usage: myLox <script> [rainfall]");
             System.exit(64);
-        } else if (args.length == 1) {
-            runFile(args[0]);
-        } else {
-            runPrompt();
         }
-    }
 
-    private static void runFile(String path) throws IOException {
-        byte[] bytes = Files.readAllBytes(Paths.get(path));
-        run(new String(bytes, Charset.defaultCharset()));
+        // Optional rainfall factor
+        if (args.length == 2) {
+            try {
+                double rf = Double.parseDouble(args[1]);
+                interpreter.setRainfall(rf);
+            } catch (NumberFormatException e) {
+                System.out.println("Rainfall must be a number, got: " + args[1]);
+                System.exit(64);
+            }
+        }
+
+        runFile(args[0]);
 
         if (hadError)
             System.exit(65);
@@ -34,19 +39,9 @@ public class myLox {
             System.exit(70);
     }
 
-    private static void runPrompt() throws IOException {
-        InputStreamReader input = new InputStreamReader(System.in);
-        BufferedReader reader = new BufferedReader(input);
-
-        for (;;) {
-            System.out.println(">");
-            String line = reader.readLine();
-            if (line == null) {
-                break;
-            }
-            run(line);
-            hadError = false;
-        }
+    private static void runFile(String path) throws IOException {
+        byte[] bytes = Files.readAllBytes(Paths.get(path));
+        run(new String(bytes, Charset.defaultCharset()));
     }
 
     private static void run(String source) {
@@ -56,11 +51,9 @@ public class myLox {
         Parser parser = new Parser(tokens);
         List<Stmt> statements = parser.parse();
 
-        // Stop if there was a syntax error.
         if (hadError)
             return;
 
-        System.out.println(statements);
         interpreter.interpret(statements);
     }
 
@@ -68,10 +61,8 @@ public class myLox {
         report(line, "", message);
     }
 
-    private static void report(int line, String where,
-            String message) {
-        System.err.println(
-                "[line " + line + "] Error" + where + ": " + message);
+    private static void report(int line, String where, String message) {
+        System.err.println("[line " + line + "] Error" + where + ": " + message);
         hadError = true;
     }
 
@@ -84,8 +75,7 @@ public class myLox {
     }
 
     static void runtimeError(RuntimeError error) {
-        System.err.println(error.getMessage() +
-                "\n[line " + error.token.line + "]");
+        System.err.println(error.getMessage() + "\n[line " + error.token.line + "]");
         hadRuntimeError = true;
     }
 }
