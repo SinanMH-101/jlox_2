@@ -1,13 +1,15 @@
+//rainfall = [2, 5, 10, 0, 0];
 
-var a = 4x;
-var b = 5x;
-var c = 6x;
+river a = 4x;
+river b = 5x;
+river c = 6x;
 
 c <- a~~b;
 
 //c = 6x ~~ (4x ~~ 5x) = 17x
 
 print(c);
+
 
 //javac -d bin test/myLox.java 
 //java -cp bin test.myLox test.txt 

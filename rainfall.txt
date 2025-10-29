@@ -1,0 +1,17 @@
+rainfall thisWeek= [6, 4, 7, 5, 10, 0, 0]
+
+var a = 4x
+var b = 5x
+var c = 6x
+
+c <- a~~b
+
+simulate(thisWeek);
+
+// expected return 
+
+rainfall    6  4  7   5   10 0 0
+
+a           24 16 28  20  40   4  4
+b           30 20 35  25  50   5  5
+c           90 60 105 75  150  15 15
