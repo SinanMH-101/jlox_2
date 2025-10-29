@@ -3,12 +3,6 @@ package test;
 import java.util.ArrayList;
 import java.util.List;
 
-import test.*;
-import test.Expr.Variable;
-import test.Stmt.Return;
-import test.Stmt.Var;
-import test.Return.*;
-
 class Interpreter implements Expr.Visitor<Object>,
         Stmt.Visitor<Void> {
 
