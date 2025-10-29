@@ -14,6 +14,7 @@ enum TokenType {
   // River operators.
   CONFLUENCE,     // "~~"
   BLOCKADE,       // "!~"
+  FLOW_INTO,
 
   // Literals.
   IDENTIFIER, STRING, NUMBER,
