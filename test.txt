@@ -1,10 +1,12 @@
 river a = 4x;
 river b = 5x;
 river c = 6x;
+river d = 7x;
 
-c <- a~~b;
 
-print(c);
+d <- c <- a~~b;
+
+print(d);
 
 
 //javac -d bin test/myLox.java 

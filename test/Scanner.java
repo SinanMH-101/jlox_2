@@ -31,6 +31,7 @@ class Scanner {
 
     static {
         keywords = new HashMap<>();
+        keywords.put("dam", FUN); // dam foo(...) { ... } parses like fun
         keywords.put("and", AND);
         keywords.put("class", CLASS);
         keywords.put("else", ELSE);

@@ -8,9 +8,13 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     private double rainfall = 1.0;
 
+    
+
     void setRainfall(double r) {
-        this.rainfall = r;
-    }
+    this.rainfall = r;
+    // keep a global numeric 'rainfall' available to programs
+    globals.define("rainfall", r); // define() overwrites in your Environment
+}
 
     Interpreter() {
         globals.define("clock", new LoxCallable() {
@@ -29,6 +33,8 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 return "<native fn>";
             }
         });
+
+        globals.define("rainfall", rainfall);
     }
 
     void interpret(List<Stmt> statements) {

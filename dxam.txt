@@ -1,0 +1,15 @@
+river a = 4x;
+river b = 5x;
+river c = 6x;
+
+dam Z(inflow) {
+  if (rainfall > 5) {
+    return inflow / 2;
+  }
+  return inflow;
+}
+
+// Either of these are equivalent in meaning (prefer the call form):
+c <- b ~~ Z(a);
+// c <- b ~~ (a !~ Z);   // see Option B below if you really want this sugar
+print(c);
