@@ -8,13 +8,19 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     private double rainfall = 1.0;
 
-    
+    static final class Flow {
+        final double cubicPerSecond; // already multiplied by rainfall
+
+        Flow(double v) {
+            this.cubicPerSecond = v;
+        }
+    }
 
     void setRainfall(double r) {
-    this.rainfall = r;
-    // keep a global numeric 'rainfall' available to programs
-    globals.define("rainfall", r); // define() overwrites in your Environment
-}
+        this.rainfall = r;
+        // keep a global numeric 'rainfall' available to programs
+        globals.define("rainfall", r); // define() overwrites in your Environment
+    }
 
     Interpreter() {
         globals.define("clock", new LoxCallable() {
@@ -52,12 +58,15 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     @Override
     public Object visitLiteralExpr(Expr.Literal expr) {
         Object v = expr.value;
+
+        // If it's a flow literal like "5x", evaluate to Flow(rainfall * 5)
         if (v instanceof String s && s.endsWith("x")) {
             String core = s.substring(0, s.length() - 1);
             double coeff = Double.parseDouble(core);
-            return coeff * rainfall; // e.g., 5x with rainfall=10 -> 50.0
+            return new Flow(coeff * rainfall);
         }
-        return v;
+
+        return v; // numbers, strings, booleans unchanged
     }
 
     @Override
@@ -97,15 +106,15 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         Object right = evaluate(expr.right);
 
         switch (expr.operator.type) {
-            case CONFLUENCE: { // ~~ : add flows (now numeric)
-                double l = asFlow(expr.operator, left);
-                double r = asFlow(expr.operator, right);
-                return l + r; // Double
+            case CONFLUENCE: { // ~~ (add flows)
+                double l = toFlow(expr.operator, left);
+                double r = toFlow(expr.operator, right);
+                return new Flow(l + r);
             }
-            case BLOCKADE: { // !~ : subtract flows
-                double l = asFlow(expr.operator, left);
-                double r = asFlow(expr.operator, right);
-                return l - r; // Double
+            case BLOCKADE: { // !~ (subtract flows)
+                double l = toFlow(expr.operator, left);
+                double r = toFlow(expr.operator, right);
+                return new Flow(l - r);
             }
 
             // ----- Normal arithmetic still supported -----
@@ -271,6 +280,22 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     // ===== Helpers =====
 
+    private double toFlow(Token op, Object v) {
+        if (v instanceof Flow f)
+            return f.cubicPerSecond;
+        if (v instanceof Double d)
+            return d; // allow plain numbers to mix with flows
+        if (v instanceof String s && s.endsWith("x")) {
+            String core = s.substring(0, s.length() - 1);
+            try {
+                return Double.parseDouble(core) * rainfall;
+            } catch (NumberFormatException e) {
+                throw new RuntimeError(op, "Invalid flow literal: " + s);
+            }
+        }
+        throw new RuntimeError(op, "Expected a flow (e.g., 3.2x) or number, got: " + stringify(v));
+    }
+
     private void execute(Stmt stmt) {
         stmt.accept(this);
     }
@@ -339,12 +364,27 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     String stringify(Object object) {
         if (object == null)
             return "nil";
-        if (object instanceof Double) {
-            String text = object.toString();
-            if (text.endsWith(".0"))
-                text = text.substring(0, text.length() - 2);
-            return text;
+
+        if (object instanceof Flow f) {
+            String t = Double.toString(f.cubicPerSecond);
+            if (t.endsWith(".0"))
+                t = t.substring(0, t.length() - 2);
+            return t + " m3/s";
         }
+
+        if (object instanceof Double d) {
+            String t = Double.toString(d);
+            if (t.endsWith(".0"))
+                t = t.substring(0, t.length() - 2);
+            return t; // plain numbers: no unit
+        }
+
+        if (object instanceof String s)
+            return s;
+        if (object instanceof Boolean b)
+            return b.toString();
+
         return object.toString();
     }
+
 }

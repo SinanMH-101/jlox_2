@@ -9,7 +9,7 @@ dam Z(inflow) {
   return inflow;
 }
 
-// Either of these are equivalent in meaning (prefer the call form):
+
 c <- b ~~ Z(a);
-// c <- b ~~ (a !~ Z);   // see Option B below if you really want this sugar
+
 print(c);
