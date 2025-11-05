@@ -212,9 +212,75 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitPrintStmt(Stmt.Print stmt) {
+        String label = extractName(stmt.expression);
         Object value = evaluate(stmt.expression);
-        System.out.println(stringify(value));
+
+        String out = formatValue(value); // single-line, nicely formatted
+
+        if (label != null) {
+            System.out.println(label + ": " + out);
+        } else {
+            System.out.println(out);
+        }
         return null;
+    }
+
+    /* ===== pretty labeling ===== */
+    private String extractName(Expr expr) {
+        if (expr instanceof Expr.Variable v) {
+            return v.name.lexeme;
+        }
+        if (expr instanceof Expr.Assign a) {
+            return a.name.lexeme;
+        }
+        // Could handle more cases (e.g., grouping around a variable)
+        if (expr instanceof Expr.Grouping g) {
+            return extractName(g.expression);
+        }
+        return null;
+    }
+
+    /* ===== single-line formatting ===== */
+    private String formatValue(Object v) {
+        if (v == null)
+            return "nil";
+
+        if (v instanceof Flow f) {
+            return trimNum(f.cubicPerSecond) + " m3/s";
+        }
+
+        if (v instanceof Double d) {
+            return trimNum(d); // plain numbers (e.g., gates) => no unit
+        }
+
+        if (v instanceof java.util.List<?> list) {
+            // Join list elements on one line
+            java.util.List<String> parts = new java.util.ArrayList<>();
+            for (Object elem : list) {
+                if (elem instanceof Flow f) {
+                    parts.add(trimNum(f.cubicPerSecond) + " m3/s");
+                } else if (elem instanceof Double dd) {
+                    parts.add(trimNum(dd));
+                } else {
+                    parts.add(String.valueOf(elem));
+                }
+            }
+            return String.join(" ", parts);
+        }
+
+        if (v instanceof String s)
+            return s;
+        if (v instanceof Boolean b)
+            return b.toString();
+
+        return v.toString();
+    }
+
+    private String trimNum(double d) {
+        String t = Double.toString(d);
+        if (t.endsWith(".0"))
+            t = t.substring(0, t.length() - 2);
+        return t;
     }
 
     @Override
@@ -383,7 +449,6 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             return s;
         if (object instanceof Boolean b)
             return b.toString();
-
         return object.toString();
     }
 

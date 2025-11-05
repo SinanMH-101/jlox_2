@@ -21,7 +21,7 @@ dam H(inflow, loss, gate) {
     return inflow !~ loss;
   }
   if (rainfall > 5){
-    gate == 1
+    return inflow !~ loss;
   }
   return inflow;
 }
@@ -52,27 +52,34 @@ Nexus <- Erebus ~~ Hypnos;
 Oceanus <- Oceanus ~~ Phlegethon ~~ Nexus;
 
 // --- Reporting -------------------------------------------------------
+print("");
 
 print("=== Base Rivers (m³/s depends on runtime rainfall) ===");
 print(Styx);
 print(Acheron);
 print(Lethe);
 print(Cocytus);
-print(Phlegethon);
-print(Oceanus);   
+print(Phlegethon);  
+print("");
 
 print("=== Dam Loss Settings ===");
 print(lossZ);
 print(lossH);
+print("");
 
-print("=== Gates (numbers) ===");
+print("=== Gates (open/close) ===");
 print(gateZ);
 print(gateH);
+print("");
 
 print("=== Intermediate Nodes ===");
 print(Erebus);
 print(Hypnos);
 print(Nexus);
+print("");
 
 print("=== Final Outflow (Oceanus) ===");
 print(Oceanus);
+print("");
+
+
