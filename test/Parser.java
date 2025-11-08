@@ -54,8 +54,6 @@ public class Parser {
         return expressionStatement();
     }
 
-    // ... keep your existing forStatement/if/while/print/return/block helpers ...
-
     private Stmt varDeclaration() {
         Token name = consume(IDENTIFIER, "Expect variable name.");
         Expr initializer = null;
@@ -150,8 +148,7 @@ public class Parser {
         }
         return expr;
     }
-
-    // *** MODIFIED: treat ~~ and !~ at the same precedence as + and - ***
+    
     private Expr term() {
         Expr expr = factor();
         while (match(MINUS, PLUS, CONFLUENCE, BLOCKADE)) {

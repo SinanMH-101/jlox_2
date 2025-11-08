@@ -152,20 +152,24 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             }
 
             case GREATER: {
-                checkNumberOperands(expr.operator, left, right);
-                return (double) left > (double) right;
+                double l = toScalar(expr.operator, left);
+                double r = toScalar(expr.operator, right);
+                return l > r;
             }
             case GREATER_EQUAL: {
-                checkNumberOperands(expr.operator, left, right);
-                return (double) left >= (double) right;
+                double l = toScalar(expr.operator, left);
+                double r = toScalar(expr.operator, right);
+                return l >= r;
             }
             case LESS: {
-                checkNumberOperands(expr.operator, left, right);
-                return (double) left < (double) right;
+                double l = toScalar(expr.operator, left);
+                double r = toScalar(expr.operator, right);
+                return l < r;
             }
             case LESS_EQUAL: {
-                checkNumberOperands(expr.operator, left, right);
-                return (double) left <= (double) right;
+                double l = toScalar(expr.operator, left);
+                double r = toScalar(expr.operator, right);
+                return l <= r;
             }
             case BANG_EQUAL:
                 return !isEqual(left, right);
@@ -348,7 +352,24 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     // ===== Helpers =====
-    // Make a 7-day series from a flow coefficient like 4.0x
+
+    private double toScalar(Token op, Object v) {
+        if (v instanceof Double d)
+            return d;
+        if (v instanceof FlowSeries fs)
+            return fs.days[0];
+        if (v instanceof String s && s.endsWith("x")) {
+            String core = s.substring(0, s.length() - 1);
+            try {
+                double coeff = Double.parseDouble(core);
+                return seriesFromCoeff(coeff).days[0];
+            } catch (NumberFormatException e) {
+                throw new RuntimeError(op, "Invalid flow literal: " + s);
+            }
+        }
+        throw new RuntimeError(op, "Expected a number or flow for comparison, got: " + stringify(v));
+    }
+
     // Day t = max(coeff - t, 1) * rainfall for t=0..6
     private FlowSeries seriesFromCoeff(double coeff) {
         double[] arr = new double[7];
@@ -446,8 +467,14 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     private boolean isTruthy(Object object) {
         if (object == null)
             return false;
-        if (object instanceof Boolean)
-            return (boolean) object;
+        if (object instanceof Boolean b)
+            return b;
+        if (object instanceof FlowSeries fs) {
+            for (double d : fs.days)
+                if (d != 0.0)
+                    return true;
+            return false;
+        }
         return true;
     }
 

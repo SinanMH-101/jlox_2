@@ -10,8 +10,8 @@ river Oceanus = 6.0x;
 // Dams subtract a fixed flow loss when their gate is "open" (gate > threshold).
 
 dam Z(inflow, loss, gate) {
-  if (gate == 1) {
-    return inflow !~ loss;   
+  if (inflow > 15) {
+    return inflow/2;   
   }
   return inflow;
 }
