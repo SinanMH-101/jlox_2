@@ -8,6 +8,14 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     private double rainfall = 1.0;
 
+    static final class FlowSeries {
+        final double[] days; // length 7
+
+        FlowSeries(double[] days) {
+            this.days = days;
+        }
+    }
+
     static final class Flow {
         final double cubicPerSecond; // already multiplied by rainfall
 
@@ -59,14 +67,14 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     public Object visitLiteralExpr(Expr.Literal expr) {
         Object v = expr.value;
 
-        // If it's a flow literal like "5x", evaluate to Flow(rainfall * 5)
+        // "Nx" -> FlowSeries that decays over 7 days with rainfall scaling
         if (v instanceof String s && s.endsWith("x")) {
             String core = s.substring(0, s.length() - 1);
             double coeff = Double.parseDouble(core);
-            return new Flow(coeff * rainfall);
+            return seriesFromCoeff(coeff);
         }
 
-        return v; // numbers, strings, booleans unchanged
+        return v; // numbers, strings, booleans as-is
     }
 
     @Override
@@ -106,15 +114,15 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         Object right = evaluate(expr.right);
 
         switch (expr.operator.type) {
-            case CONFLUENCE: { // ~~ (add flows)
-                double l = toFlow(expr.operator, left);
-                double r = toFlow(expr.operator, right);
-                return new Flow(l + r);
+            case CONFLUENCE: { // ~~ : sum day-by-day
+                FlowSeries L = toSeries(expr.operator, left);
+                FlowSeries R = toSeries(expr.operator, right);
+                return addSeries(L, R);
             }
-            case BLOCKADE: { // !~ (subtract flows)
-                double l = toFlow(expr.operator, left);
-                double r = toFlow(expr.operator, right);
-                return new Flow(l - r);
+            case BLOCKADE: { // !~ : subtract day-by-day
+                FlowSeries L = toSeries(expr.operator, left);
+                FlowSeries R = toSeries(expr.operator, right);
+                return subSeries(L, R);
             }
 
             // ----- Normal arithmetic still supported -----
@@ -215,7 +223,14 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         String label = extractName(stmt.expression);
         Object value = evaluate(stmt.expression);
 
-        String out = formatValue(value); // single-line, nicely formatted
+        String out;
+        if (value instanceof FlowSeries fs) {
+            out = formatSeries(fs);
+        } else if (value instanceof Double d) {
+            out = trimNum(d); // plain numbers: no unit
+        } else {
+            out = stringify(value);
+        }
 
         if (label != null) {
             System.out.println(label + ": " + out);
@@ -225,18 +240,13 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         return null;
     }
 
-    /* ===== pretty labeling ===== */
     private String extractName(Expr expr) {
-        if (expr instanceof Expr.Variable v) {
+        if (expr instanceof Expr.Variable v)
             return v.name.lexeme;
-        }
-        if (expr instanceof Expr.Assign a) {
+        if (expr instanceof Expr.Assign a)
             return a.name.lexeme;
-        }
-        // Could handle more cases (e.g., grouping around a variable)
-        if (expr instanceof Expr.Grouping g) {
+        if (expr instanceof Expr.Grouping g)
             return extractName(g.expression);
-        }
         return null;
     }
 
@@ -274,13 +284,6 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             return b.toString();
 
         return v.toString();
-    }
-
-    private String trimNum(double d) {
-        String t = Double.toString(d);
-        if (t.endsWith(".0"))
-            t = t.substring(0, t.length() - 2);
-        return t;
     }
 
     @Override
@@ -345,6 +348,76 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     // ===== Helpers =====
+    // Make a 7-day series from a flow coefficient like 4.0x
+    // Day t = max(coeff - t, 1) * rainfall for t=0..6
+    private FlowSeries seriesFromCoeff(double coeff) {
+        double[] arr = new double[7];
+        for (int i = 0; i < 7; i++) {
+            double base = Math.max(coeff - i, 1.0);
+            arr[i] = base * rainfall;
+        }
+        return new FlowSeries(arr);
+    }
+
+    // Promote various values to a FlowSeries (for ~~ and !~)
+    private FlowSeries toSeries(Token op, Object v) {
+        if (v instanceof FlowSeries fs)
+            return fs;
+
+        if (v instanceof Double d) {
+            // constant series (plain numbers treated as m3/s constants)
+            double[] a = new double[7];
+            for (int i = 0; i < 7; i++)
+                a[i] = d;
+            return new FlowSeries(a);
+        }
+
+        if (v instanceof String s && s.endsWith("x")) {
+            String core = s.substring(0, s.length() - 1);
+            try {
+                double coeff = Double.parseDouble(core);
+                return seriesFromCoeff(coeff);
+            } catch (NumberFormatException e) {
+                throw new RuntimeError(op, "Invalid flow literal: " + s);
+            }
+        }
+
+        throw new RuntimeError(op, "Expected a flow literal (e.g., 3x) or number, got: " + stringify(v));
+    }
+
+    // Elementwise ops
+    private FlowSeries addSeries(FlowSeries a, FlowSeries b) {
+        double[] out = new double[7];
+        for (int i = 0; i < 7; i++)
+            out[i] = a.days[i] + b.days[i];
+        return new FlowSeries(out);
+    }
+
+    private FlowSeries subSeries(FlowSeries a, FlowSeries b) {
+        double[] out = new double[7];
+        for (int i = 0; i < 7; i++)
+            out[i] = a.days[i] - b.days[i];
+        return new FlowSeries(out);
+    }
+
+    // Pretty for printing a series on one line: "3 m3/s, 2 m3/s, 1 m3/s, ..."
+    private String formatSeries(FlowSeries fs) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < fs.days.length; i++) {
+            String t = trimNum(fs.days[i]) + " m3/s";
+            if (i > 0)
+                sb.append(", ");
+            sb.append(t);
+        }
+        return sb.toString();
+    }
+
+    private String trimNum(double d) {
+        String t = Double.toString(d);
+        if (t.endsWith(".0"))
+            t = t.substring(0, t.length() - 2);
+        return t;
+    }
 
     private double toFlow(Token op, Object v) {
         if (v instanceof Flow f)
@@ -430,25 +503,14 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     String stringify(Object object) {
         if (object == null)
             return "nil";
-
-        if (object instanceof Flow f) {
-            String t = Double.toString(f.cubicPerSecond);
-            if (t.endsWith(".0"))
-                t = t.substring(0, t.length() - 2);
-            return t + " m3/s";
-        }
-
-        if (object instanceof Double d) {
-            String t = Double.toString(d);
-            if (t.endsWith(".0"))
-                t = t.substring(0, t.length() - 2);
-            return t; // plain numbers: no unit
-        }
-
+        if (object instanceof Double d)
+            return trimNum(d);
         if (object instanceof String s)
             return s;
         if (object instanceof Boolean b)
             return b.toString();
+        if (object instanceof FlowSeries fs)
+            return formatSeries(fs);
         return object.toString();
     }
 
