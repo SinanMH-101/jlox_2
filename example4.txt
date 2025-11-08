@@ -1,0 +1,24 @@
+// Base flows 
+river A = 4x;
+river B = 5x;
+river C = 10x;
+
+// A and B join, go through dam Z, then meet river C
+
+// Dam Z: if inflow is large, it halves; otherwise it passes through.
+dam Z(inflow) {
+  if (inflow > 12) { 
+    return inflow / 2; 
+  }
+  return inflow;
+}
+
+
+// Topology
+river out = C ~~ Z(A ~~ B);      
+
+// Report
+print(A);
+print(B);
+print(C);
+print(out);

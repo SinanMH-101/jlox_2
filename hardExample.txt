@@ -17,7 +17,10 @@ river Oceanus     = 6.0x;
 // --- Dam definitions ----------------------------------------------
 // Z: per-day halving when inflow_day > 15 (uses native damGate).
 dam Z(inflow, loss, gate) {
-  return damGate(inflow, 15, 0.5);
+  if (gate == 1) { 
+        return inflow !~ loss; 
+    }
+  return inflow;
 }
 
 // H: subtracts a fixed loss when gate is open OR when rainfall > 5.
@@ -60,11 +63,6 @@ print(Acheron);
 print(Lethe);
 print(Cocytus);
 print(Phlegethon);
-print("");
-
-print("=== Dam Loss Settings ===");
-print(lossZ);
-print(lossH);
 print("");
 
 print("=== Gates (open/close) ===");

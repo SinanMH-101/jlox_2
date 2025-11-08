@@ -1,0 +1,45 @@
+// Base flows 
+river A = 4x;
+river B = 5x;
+river C = 10x;
+
+// Threshold dam: halves only when inflow > 90
+dam X(inflow) {
+  if (inflow > 90) { 
+    return inflow / 2; 
+    }
+  return inflow;
+}
+
+// Fixed-loss dam: subtracts a constant loss when gate is open
+dam Y(inflow, loss, gate) {
+  if (gate == 1) { 
+        return inflow !~ loss; 
+    }
+  return inflow;
+}
+
+// Rainfall-aware dam: adds bonus when rainfall is high
+dam Z(inflow, bonus) {
+  if (rainfall >= 5) 
+    { 
+        return inflow ~~ bonus; 
+  }
+  return inflow;
+}
+
+var gateOpen = 1;
+var gateClose = 0;
+river loss = 1x;
+
+river out1 = X(A);
+river out2Close = Y(B, loss, gateClose);
+river out2Open = Y(B, loss, gateOpen);
+river out3 = Z(C, 2.0x);
+
+print(" ");
+print(out1);
+print(out2Close);
+print(out2Open);
+print(out3);
+print(" ");
