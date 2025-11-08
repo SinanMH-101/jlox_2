@@ -48,6 +48,36 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             }
         });
 
+        globals.define("damGate", new LoxCallable() {
+            @Override
+            public int arity() {
+                return 3;
+            } // (inflow, threshold, factor)
+
+            @Override
+            public Object call(Interpreter I, java.util.List<Object> args) {
+                Object inArg = args.get(0);
+                Object thrArg = args.get(1);
+                Object facArg = args.get(2);
+
+                FlowSeries inflow = I.toSeries(null, inArg); 
+                double threshold = (thrArg instanceof Double d) ? d : I.toScalar(null, thrArg);
+                double factor = (facArg instanceof Double d) ? d : I.toScalar(null, facArg);
+
+                double[] out = new double[7];
+                for (int i = 0; i < 7; i++) {
+                    double v = inflow.days[i];
+                    out[i] = (v > threshold) ? v * factor : v;
+                }
+                return new FlowSeries(out);
+            }
+
+            @Override
+            public String toString() {
+                return "<native fn damGate>";
+            }
+        });
+
         globals.define("rainfall", rainfall);
     }
 
@@ -140,6 +170,28 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 throw new RuntimeError(expr.operator, "Operands must be two numbers or two strings.");
             }
             case SLASH: {
+                // If either side is a flow/series (or a "Nx" literal), do element-wise division
+                // over 7 days.
+                boolean leftIsFlowish = (left instanceof FlowSeries) || (left instanceof String s1 && s1.endsWith("x"));
+                boolean rightIsFlowish = (right instanceof FlowSeries)
+                        || (right instanceof String s2 && s2.endsWith("x"));
+
+                if (leftIsFlowish || rightIsFlowish) {
+                    FlowSeries L = toSeries(expr.operator, left);
+                    FlowSeries R = toSeries(expr.operator, right);
+
+                    double[] out = new double[7];
+                    for (int i = 0; i < 7; i++) {
+                        double denom = R.days[i];
+                        if (denom == 0.0) {
+                            throw new RuntimeError(expr.operator, "Division by zero on day " + (i + 1) + ".");
+                        }
+                        out[i] = L.days[i] / denom;
+                    }
+                    return new FlowSeries(out);
+                }
+
+                // Plain number ÷ number
                 checkNumberOperands(expr.operator, left, right);
                 double denom = (double) right;
                 if (denom == 0.0)
@@ -384,26 +436,21 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     private FlowSeries toSeries(Token op, Object v) {
         if (v instanceof FlowSeries fs)
             return fs;
-
         if (v instanceof Double d) {
-            // constant series (plain numbers treated as m3/s constants)
             double[] a = new double[7];
             for (int i = 0; i < 7; i++)
                 a[i] = d;
             return new FlowSeries(a);
         }
-
         if (v instanceof String s && s.endsWith("x")) {
             String core = s.substring(0, s.length() - 1);
             try {
-                double coeff = Double.parseDouble(core);
-                return seriesFromCoeff(coeff);
+                return seriesFromCoeff(Double.parseDouble(core));
             } catch (NumberFormatException e) {
                 throw new RuntimeError(op, "Invalid flow literal: " + s);
             }
         }
-
-        throw new RuntimeError(op, "Expected a flow literal (e.g., 3x) or number, got: " + stringify(v));
+        throw new RuntimeError(op, "Expected a flow/number for division, got: " + stringify(v));
     }
 
     // Elementwise ops

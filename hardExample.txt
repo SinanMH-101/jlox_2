@@ -1,65 +1,65 @@
-// Base rivers (flows are scaled by rainfall factor at runtime)
-river Styx = 4.0x;
-river Acheron = 5.0x;
-river Lethe = 3.0x;
-river Cocytus = 2.0x;
-river Phlegethon = 1.5x;   
-river Oceanus = 6.0x;   
+// ================================================================
+// River System Demo 
+// Compile: javac -d bin test/myLox.java    
+// Run: java -cp bin test.myLox demo.lox <rainfall>
+// Assumes that rainfall is set to 1 if not provided
+// Assumes native fn damGate(inflow, threshold, factor) is defined
+// ================================================================
 
-// --- Dam definitions -------------------------------------------------
-// Dams subtract a fixed flow loss when their gate is "open" (gate > threshold).
+// Base rivers (each "Nx" decays 1/day to min 1; scaled by rainfall at runtime)
+river Styx        = 4.0x;
+river Acheron     = 5.0x;
+river Lethe       = 3.0x;
+river Cocytus     = 2.0x;
+river Phlegethon  = 1.5x;
+river Oceanus     = 6.0x;
 
+// --- Dam definitions ----------------------------------------------
+// Z: per-day halving when inflow_day > 15 (uses native damGate).
 dam Z(inflow, loss, gate) {
-  if (inflow > 15) {
-    return inflow/2;   
-  }
-  return inflow;
+  return damGate(inflow, 15, 0.5);
 }
 
+// H: subtracts a fixed loss when gate is open OR when rainfall > 5.
 dam H(inflow, loss, gate) {
   if (gate == 1) {
     return inflow !~ loss;
   }
-  if (rainfall > 5){
+  if (rainfall > 5) {
     return inflow !~ loss;
   }
   return inflow;
 }
 
-// --- Local fixed losses expressed as flows ---------------------------
+// --- Local fixed losses (as flows) --------------------------------
 river lossZ = 0.6x;
 river lossH = 0.8x;
 
-// --- Gate settings (plain numbers). Adjust these to open/close dams --
-// Idea is that workers can manually open or close these Gates
+// --- Gate settings (plain numbers) --------------------------------
+river gateZ = 0;  // 0 = closed
+river gateH = 1;  // 1 = open
 
-river gateZ = 0;           // 0 = close
-river gateH = 1;           // 1 = open
+// --- Intermediate junctions ---------------------------------------
+river Erebus = 0.0x;   // Z(Styx, ...) ~~ Acheron
+river Hypnos = 0.0x;   // H(Lethe, ...) ~~ Cocytus
+river Nexus  = 0.0x;   // Erebus ~~ Hypnos
 
-// --- Intermediate junctions -----------------------------------------
-river Erebus     = 0.0x;   // node1: Styx through Z, then join with Acheron
-river Hypnos     = 0.0x;   // node2: Lethe through H, then join with Cocytus
-river Nexus      = 0.0x;   // final junction of node1 and node2
-
-
-// --- Network topology -----------------------------------------------
-
-Erebus <- Z(Styx, lossZ, gateZ) ~~ Acheron;
+// --- Network topology ---------------------------------------------
+Erebus <- Z(Styx,  lossZ, gateZ) ~~ Acheron;
 Hypnos <- H(Lethe, lossH, gateH) ~~ Cocytus;
-Nexus <- Erebus ~~ Hypnos;
+Nexus  <- Erebus ~~ Hypnos;
 
-// Oceanus collects its base, Phlegethon, and everything arriving at Nexus
+// Oceanus collects its base, Phlegethon, and everything at Nexus
 Oceanus <- Oceanus ~~ Phlegethon ~~ Nexus;
 
-// --- Reporting -------------------------------------------------------
+// --- Reporting -----------------------------------------------------
 print("");
-
-print("=== Base Rivers (m³/s depends on runtime rainfall) ===");
+print("=== Base Rivers (m3/s depends on runtime rainfall) ===");
 print(Styx);
 print(Acheron);
 print(Lethe);
 print(Cocytus);
-print(Phlegethon);  
+print(Phlegethon);
 print("");
 
 print("=== Dam Loss Settings ===");
@@ -81,5 +81,3 @@ print("");
 print("=== Final Outflow (Oceanus) ===");
 print(Oceanus);
 print("");
-
-
