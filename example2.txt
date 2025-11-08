@@ -1,0 +1,20 @@
+river a = 9.0x;
+river b = 7.0x;
+river c = 5.0x;
+
+river lossZ = 3.0x;
+
+dam x(inflow){
+    if(rainfall > 5){
+        return inflow !~ lossZ;
+    }
+   return damGate(inflow, 10, 0.5);
+}
+
+
+
+
+river outflow =c ~~ x(a) ~~ b;
+
+print(x(a));
+print(outflow);

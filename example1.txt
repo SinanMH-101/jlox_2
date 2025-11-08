@@ -1,0 +1,8 @@
+river a = 9.0x;
+river b = 7.0x;
+river c = 11.0x;
+
+
+print(a);
+print(b);
+print(c);
